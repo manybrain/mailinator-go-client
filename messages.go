@@ -42,17 +42,17 @@ type Message struct {
 	SecondsAgo float64 `json:"seconds_ago"`
 	Domain     string  `json:"domain"`
 
-	IsFirstExchange bool              `json:"is_first_exchange"`
-	Fromfull        string            `json:"fromfull"`
-	Headers         map[string]string `json:"headers"`
-	Parts           []Part            `json:"parts"`
-	Origfrom        string            `json:"origfrom"`
-	Mrid            string            `json:"mrid"`
-	Size            int               `json:"size"`
-	Stream          string            `json:"stream"`
-	MsgType         string            `json:"msg_type"`
-	Source          string            `json:"source"`
-	Text            string            `json:"text"`
+	IsFirstExchange bool                   `json:"is_first_exchange"`
+	Fromfull        string                 `json:"fromfull"`
+	Headers         map[string]interface{} `json:"headers"`
+	Parts           []Part                 `json:"parts"`
+	Origfrom        string                 `json:"origfrom"`
+	Mrid            string                 `json:"mrid"`
+	Size            int                    `json:"size"`
+	Stream          string                 `json:"stream"`
+	MsgType         string                 `json:"msg_type"`
+	Source          string                 `json:"source"`
+	Text            string                 `json:"text"`
 }
 
 // Part .
