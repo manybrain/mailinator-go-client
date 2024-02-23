@@ -12,7 +12,7 @@ import (
 
 // Client .
 type Client struct {
-	apiToken     string
+	apiToken   string
 	baseURL    string
 	HTTPClient *http.Client
 }
@@ -24,7 +24,7 @@ func NewMailinatorClient(apiToken string) *Client {
 		HTTPClient: &http.Client{
 			Timeout: 5 * time.Minute,
 		},
-		baseURL: "https://mailinator.com/api/v2",
+		baseURL: "https://api.mailinator.com/api/v2",
 	}
 }
 
@@ -45,9 +45,20 @@ type successResponseWithContent struct {
 }
 
 func (c *Client) sendRequest(req *http.Request, v interface{}) error {
+	return c.sendRequestWithOptions(req, v, false)
+}
+
+func (c *Client) sendRequestWithOptions(req *http.Request, v interface{}, returnBody bool) error {
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json; charset=utf-8")
-	req.Header.Set("Authorization", c.apiToken)
+
+	// Check if apiToken is provided before setting Authorization header
+	if c.apiToken != "" {
+		req.Header.Set("Authorization", c.apiToken)
+	}
+
+	// Set User-Agent header
+	req.Header.Set("User-Agent", "Mailinator SDK - Go V1.0")
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -55,6 +66,21 @@ func (c *Client) sendRequest(req *http.Request, v interface{}) error {
 	}
 
 	defer res.Body.Close()
+
+	if returnBody {
+		responseBodyBytes, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+
+		if len(responseBodyBytes) == 0 {
+			return nil
+		}
+
+		*v.(*string) = string(responseBodyBytes)
+
+		return nil
+	}
 
 	responseBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {

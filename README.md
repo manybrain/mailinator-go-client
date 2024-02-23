@@ -126,7 +126,7 @@ client := mailinator.NewMailinatorClient("API_TOKEN")
 			From:    "test_email@test.com",
 			Text:    "Hello World!",
 		}
-		res, err := client.InjectMessage(&InjectMessageOptions{"yourDomainNameHere", "yourInboxHere", message})
+		res, err := client.PostMessage(&PostMessageOptions{"yourDomainNameHere", "yourInboxHere", message})
     // ...
   ```
 
@@ -141,19 +141,19 @@ client := mailinator.NewMailinatorClient("API_TOKEN")
     res, err := client.FetchInbox(&FetchInboxOptions{Domain: "yourDomainNameHere", Inbox: "yourInboxHere"})
     
     //Fetch Message
-	res, err := client.FetchMessage(&FetchMessageOptions{"yourDomainNameHere", "yourInboxHere", "yourMessageIdHere"})
+	res, err := client.FetchInboxMessage(&FetchInboxMessageOptions{"yourDomainNameHere", "yourInboxHere", "yourMessageIdHere"})
     
     //Fetch SMS Messages
 	res, err := client.FetchSMSMessage(&FetchSMSMessageOptions{"yourDomainNameHere", "yourTeamSMSNumberHere"})
     
     //Fetch Attachments
-	res, err := client.FetchAtachments(&FetchAttachmentsOptions{"yourDomainNameHere", "yourInboxHere", "yourMessageIdWithAttachmentHere"})
+	res, err := client.FetchInboxMessageAtachments(&FetchInboxMessageAttachmentsOptions{"yourDomainNameHere", "yourInboxHere", "yourMessageIdWithAttachmentHere"})
     
     //Fetch Attachment
-	res, err := client.FetchAttachment(&FetchAttachmentOptions{"yourDomainNameHere", "yourInboxHere", "yourMessageIdWithAttachmentHere", "yourAttachmentIdHere"})
+	res, err := client.FetchInboxMessageAttachment(&FetchInboxMessageAttachmentOptions{"yourDomainNameHere", "yourInboxHere", "yourMessageIdWithAttachmentHere", "yourAttachmentIdHere"})
             
     //Fetch Message Links
-	res, err := client.FetchMessageLinks(&FetchMessageLinksOptions{"yourDomainNameHere", "yourInboxHere", "yourMessageIdHere"})
+	res, err := client.FetchInboxMessageLinks(&FetchInboxMessageLinksOptions{"yourDomainNameHere", "yourInboxHere", "yourMessageIdHere"})
   ```
 
 - Delete Message / AllInboxMessages / AllDomainMessages
@@ -207,4 +207,10 @@ Most of the tests require env variables with valid values. Visit tests source co
 * `MAILINATOR_TEST_MESSAGE_WITH_ATTACHMENT_ID` - existing message id within inbox (see above) within private domain (see above); see also https://manybrain.github.io/m8rdocs/#fetch-message
 * `MAILINATOR_TEST_ATTACHMENT_ID` - existing message id within inbox (see above) within private domain (see above); see also https://manybrain.github.io/m8rdocs/#fetch-message
 * `MAILINATOR_TEST_DELETE_DOMAIN` - don't use it unless you are 100% sure what you are doing
+* `MAILINATOR_TEST_WEBHOOKTOKEN_PRIVATEDOMAIN` - private domain for webhook token
+* `MAILINATOR_TEST_WEBHOOKTOKEN_CUSTOMSERVICE` - custom service for webhook token
+* `MAILINATOR_TEST_AUTH_SECRET` - authenticator secret
+* `MAILINATOR_TEST_AUTH_ID` - authenticator id
+* `MAILINATOR_TEST_WEBHOOK_INBOX` - inbox for webhook
+* `MAILINATOR_TEST_WEBHOOK_CUSTOMSERVICE` - custom service for webhook
 

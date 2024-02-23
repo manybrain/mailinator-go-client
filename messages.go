@@ -61,10 +61,16 @@ type Part struct {
 	Body    string            `json:"body"`
 }
 
+// FetchInboxMessageOptions .
+type FetchInboxMessageOptions struct {
+	Domain    string `json:"domain"`
+	Inbox     string `json:"inbox"`
+	MessageId string `json:"message_id"`
+}
+
 // FetchMessageOptions .
 type FetchMessageOptions struct {
 	Domain    string `json:"domain"`
-	Inbox     string `json:"inbox"`
 	MessageId string `json:"message_id"`
 }
 
@@ -81,10 +87,16 @@ type SMSMessage struct {
 	Messages []Message `json:"msgs"`
 }
 
-// FetchAttachmentsOptions .
-type FetchAttachmentsOptions struct {
+// FetchInboxMessageAttachmentsOptions .
+type FetchInboxMessageAttachmentsOptions struct {
 	Domain    string `json:"domain"`
 	Inbox     string `json:"inbox"`
+	MessageId string `json:"message_id"`
+}
+
+// FetchMessageAttachmentsOptions .
+type FetchMessageAttachmentsOptions struct {
+	Domain    string `json:"domain"`
 	MessageId string `json:"message_id"`
 }
 
@@ -102,10 +114,17 @@ type Attachment struct {
 	AttachmentId            int    `json:"attachment-id"`
 }
 
-// FetchAttachmentOptions .
-type FetchAttachmentOptions struct {
+// FetchInboxMessageAttachmentOptions .
+type FetchInboxMessageAttachmentOptions struct {
 	Domain       string `json:"domain"`
 	Inbox        string `json:"inbox"`
+	MessageId    string `json:"message_id"`
+	AttachmentId int    `json:"attachment_id"`
+}
+
+// FetchMessageAttachmentOptions .
+type FetchMessageAttachmentOptions struct {
+	Domain       string `json:"domain"`
 	MessageId    string `json:"message_id"`
 	AttachmentId int    `json:"attachment_id"`
 }
@@ -119,6 +138,12 @@ type FetchAttachmentResponse struct {
 
 // FetchMessageLinksOptions .
 type FetchMessageLinksOptions struct {
+	Domain    string `json:"domain"`
+	MessageId string `json:"message_id"`
+}
+
+// FetchInboxMessageLinksOptions .
+type FetchInboxMessageLinksOptions struct {
 	Domain    string `json:"domain"`
 	Inbox     string `json:"inbox"`
 	MessageId string `json:"message_id"`
@@ -153,8 +178,8 @@ type DeleteMessageOptions struct {
 	MessageId string `json:"message_id"`
 }
 
-// InjectMessageOptions .
-type InjectMessageOptions struct {
+// PostMessageOptions .
+type PostMessageOptions struct {
 	Domain  string        `json:"domain"`
 	Inbox   string        `json:"inbox"`
 	Message MessageToPost `json:"message_to_post"`
@@ -167,11 +192,65 @@ type MessageToPost struct {
 	Text    string `json:"text"`
 }
 
-// InjectedMessage .
-type InjectedMessage struct {
+// PostedMessage .
+type PostedMessage struct {
 	Status     string `json:"status"`
 	Id         string `json:"id"`
 	RulesFired []Rule `json:"rules_fired"`
+}
+
+// FetchMessageSmtpLogOptions .
+type FetchMessageSmtpLogOptions struct {
+	Domain    string `json:"domain"`
+	MessageId string `json:"message_id"`
+}
+
+// FetchInboxMessageSmtpLogOptions .
+type FetchInboxMessageSmtpLogOptions struct {
+	Domain    string `json:"domain"`
+	Inbox     string `json:"inbox"`
+	MessageId string `json:"message_id"`
+}
+
+// MessageSmtpLogs .
+type MessageSmtpLogs struct {
+	LogEntries []EmailLogEntry `json:"log"`
+}
+
+// EmailLogEntry .
+type EmailLogEntry struct {
+	Log   string `json:"log"`
+	Time  string `json:"time"`
+	Event string `json:"event"`
+}
+
+// FetchMessageRawOptions .
+type FetchMessageRawOptions struct {
+	Domain    string `json:"domain"`
+	MessageId string `json:"message_id"`
+}
+
+// FetchInboxMessageRawOptions .
+type FetchInboxMessageRawOptions struct {
+	Domain    string `json:"domain"`
+	Inbox     string `json:"inbox"`
+	MessageId string `json:"message_id"`
+}
+
+// MessageRaw .
+type MessageRaw struct {
+	RawData string `json:"rawData"`
+}
+
+// FetchLatestMessagesOptions .
+type FetchLatestMessagesOptions struct {
+	Domain string `json:"domain"`
+}
+
+// FetchLatestInboxMessagesOptions .
+type FetchLatestInboxMessagesOptions struct {
+	Domain string `json:"domain"`
+	Inbox  string `json:"inbox"`
 }
 
 // Retrieves a list of messages summaries. You can retreive a list by inbox, inboxes, or entire domain.
@@ -214,11 +293,28 @@ func (c *Client) FetchInbox(options *FetchInboxOptions) (*Inbox, error) {
 	return &res, nil
 }
 
+// Retrieves a specific message by id for specific inbox.
+func (c *Client) FetchInboxMessage(options *FetchInboxMessageOptions) (*Message, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/inboxes/%s/messages/%s", c.baseURL, options.Domain, options.Inbox, options.MessageId), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := Message{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
 // Retrieves a specific message by id.
 func (c *Client) FetchMessage(options *FetchMessageOptions) (*Message, error) {
 	var buf bytes.Buffer
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/inboxes/%s/messages/%s", c.baseURL, options.Domain, options.Inbox, options.MessageId), &buf)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/messages/%s", c.baseURL, options.Domain, options.MessageId), &buf)
 	if err != nil {
 		return nil, err
 	}
@@ -248,8 +344,8 @@ func (c *Client) FetchSMSMessage(options *FetchSMSMessageOptions) (*SMSMessage, 
 	return &res, nil
 }
 
-// Retrieves a list of attachments for a message. Note attachments are expected to be in Email format.
-func (c *Client) FetchAtachments(options *FetchAttachmentsOptions) (*Attachments, error) {
+// Retrieves a list of attachments for a message for specific inbox. Note attachments are expected to be in Email format.
+func (c *Client) FetchInboxMessageAtachments(options *FetchInboxMessageAttachmentsOptions) (*Attachments, error) {
 	var buf bytes.Buffer
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/inboxes/%s/messages/%s/attachments", c.baseURL, options.Domain, options.Inbox, options.MessageId), &buf)
@@ -265,8 +361,25 @@ func (c *Client) FetchAtachments(options *FetchAttachmentsOptions) (*Attachments
 	return &res, nil
 }
 
-// Retrieves a specific attachment.
-func (c *Client) FetchAttachment(options *FetchAttachmentOptions) (*FetchAttachmentResponse, error) {
+// Retrieves a list of attachments for a message. Note attachments are expected to be in Email format.
+func (c *Client) FetchMessageAtachments(options *FetchMessageAttachmentsOptions) (*Attachments, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/messages/%s/attachments", c.baseURL, options.Domain, options.MessageId), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := Attachments{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// Retrieves a specific attachment for specific inbox .
+func (c *Client) FetchInboxMessageAttachment(options *FetchInboxMessageAttachmentOptions) (*FetchAttachmentResponse, error) {
 	var buf bytes.Buffer
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/inboxes/%s/messages/%s/attachments/%d", c.baseURL, options.Domain, options.Inbox, options.MessageId, options.AttachmentId), &buf)
@@ -282,8 +395,42 @@ func (c *Client) FetchAttachment(options *FetchAttachmentOptions) (*FetchAttachm
 	return &res, nil
 }
 
+// Retrieves a specific attachment.
+func (c *Client) FetchMessageAttachment(options *FetchMessageAttachmentOptions) (*FetchAttachmentResponse, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/messages/%s/attachments/%d", c.baseURL, options.Domain, options.MessageId, options.AttachmentId), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := FetchAttachmentResponse{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
 // Retrieves all links found within a given email
 func (c *Client) FetchMessageLinks(options *FetchMessageLinksOptions) (*MessageLinks, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/messages/%s/links", c.baseURL, options.Domain, options.MessageId), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := MessageLinks{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// Retrieves all links found within a given email for specific inbox .
+func (c *Client) FetchInboxMessageLinks(options *FetchInboxMessageLinksOptions) (*MessageLinks, error) {
 	var buf bytes.Buffer
 
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/inboxes/%s/messages/%s/links", c.baseURL, options.Domain, options.Inbox, options.MessageId), &buf)
@@ -351,7 +498,7 @@ func (c *Client) DeleteMessage(options *DeleteMessageOptions) (*DeletedMessages,
 }
 
 // Deliver a JSON message into your private domain.
-func (c *Client) InjectMessage(options *InjectMessageOptions) (*InjectedMessage, error) {
+func (c *Client) PostMessage(options *PostMessageOptions) (*PostedMessage, error) {
 	jsonReq, _ := json.Marshal(options.Message)
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/domains/%s/inboxes/%s/messages", c.baseURL, options.Domain, options.Inbox), bytes.NewBuffer(jsonReq))
@@ -359,7 +506,109 @@ func (c *Client) InjectMessage(options *InjectMessageOptions) (*InjectedMessage,
 		return nil, err
 	}
 
-	res := InjectedMessage{}
+	res := PostedMessage{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// This endpoint retrieves smtp log from the email .
+func (c *Client) FetchMessageSmtpLog(options *FetchMessageSmtpLogOptions) (*MessageSmtpLogs, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/messages/%s/smtplog", c.baseURL, options.Domain, options.MessageId), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := MessageSmtpLogs{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// This endpoint retrieves smtp log from the email for specific inbox .
+func (c *Client) FetchInboxMessageSmtpLog(options *FetchInboxMessageSmtpLogOptions) (*MessageSmtpLogs, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/inboxes/%s/messages/%s/smtplog", c.baseURL, options.Domain, options.Inbox, options.MessageId), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := MessageSmtpLogs{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// This endpoint retrieves raw info from the email .
+func (c *Client) FetchMessageRaw(options *FetchMessageRawOptions) (*string, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/messages/%s/raw", c.baseURL, options.Domain, options.MessageId), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := new(string)
+	if err := c.sendRequestWithOptions(req, res, true); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// This endpoint retrieves raw info from the email for specific inbox .
+func (c *Client) FetchInboxMessageRaw(options *FetchInboxMessageRawOptions) (*string, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/inboxes/%s/messages/%s/raw", c.baseURL, options.Domain, options.Inbox, options.MessageId), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := new(string)
+	if err := c.sendRequestWithOptions(req, res, true); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// That fetches the latest 5 FULL messages .
+func (c *Client) FetchLatestMessages(options *FetchLatestMessagesOptions) (*Inbox, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/messages/*", c.baseURL, options.Domain), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := Inbox{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// That fetches the latest 5 FULL messages for specific inbox .
+func (c *Client) FetchLatestInboxMessages(options *FetchLatestInboxMessagesOptions) (*Inbox, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/inboxes/%s/messages/*", c.baseURL, options.Domain, options.Inbox), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := Inbox{}
 	if err := c.sendRequest(req, &res); err != nil {
 		return nil, err
 	}

@@ -10,6 +10,16 @@ type GetDomainOptions struct {
 	DomainId string `json:"domain_id"`
 }
 
+// CreateDomainOptions .
+type CreateDomainOptions struct {
+	Name string `json:"name"`
+}
+
+// DeleteDomainOptions .
+type DeleteDomainOptions struct {
+	DomainId string `json:"domain_id"`
+}
+
 // DomainsList .
 type DomainsList struct {
 	Domains []Domain `json:"domains"`
@@ -41,8 +51,8 @@ type MatchType string
 
 const (
 	ANY          MatchType = "ANY"
-	ALL           = "ALL"
-	ALWAYS_MATCH  = "ALWAYS_MATCH"
+	ALL                    = "ALL"
+	ALWAYS_MATCH           = "ALWAYS_MATCH"
 )
 
 // Condition .
@@ -56,7 +66,7 @@ type OperationType string
 
 const (
 	EQUALS OperationType = "EQUALS"
-	PREFIX = "PREFIX"
+	PREFIX               = "PREFIX"
 )
 
 // ConditionData .
@@ -76,7 +86,7 @@ type ActionType string
 
 const (
 	WEBHOOK ActionType = "WEBHOOK"
-	DROP = "DROP"
+	DROP               = "DROP"
 )
 
 // ActionData .
@@ -107,6 +117,36 @@ func (c *Client) GetDomain(options *GetDomainOptions) (*Domain, error) {
 	}
 
 	res := Domain{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// This endpoint creates a private domain attached to your account. Note, the domain must be unique to the system and you must have not reached your maximum number of Private Domains .
+func (c *Client) CreateDomain(options *CreateDomainOptions) (*ResponseStatus, error) {
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/domains/%s", c.baseURL, options.Name), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res := ResponseStatus{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// This endpoint deletes a Private Domain .
+func (c *Client) DeleteDomain(options *DeleteDomainOptions) (*ResponseStatus, error) {
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/domains/%s", c.baseURL, options.DomainId), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res := ResponseStatus{}
 	if err := c.sendRequest(req, &res); err != nil {
 		return nil, err
 	}
