@@ -22,7 +22,7 @@ func NewMailinatorClient(apiToken string) *Client {
 	return &Client{
 		apiToken: apiToken,
 		HTTPClient: &http.Client{
-			Timeout: 5 * time.Minute,
+			Timeout: 2 * time.Minute,
 		},
 		baseURL: "https://api.mailinator.com/api/v2",
 	}
@@ -58,7 +58,7 @@ func (c *Client) sendRequestWithOptions(req *http.Request, v interface{}, return
 	}
 
 	// Set User-Agent header
-	req.Header.Set("User-Agent", "Mailinator SDK - Go V1.0")
+	req.Header.Set("User-Agent", "Mailinator SDK - Go V1.1")
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {

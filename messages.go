@@ -15,6 +15,10 @@ type FetchInboxOptions struct {
 	Limit         int    `json:"limit"`
 	Sort          Sort   `json:"sort"`
 	DecodeSubject bool   `json:"decode_subject"`
+	Cursor        string `json:"cursor"`
+	Full          bool   `json:"full"`
+	Delete        string `json:"delete"`
+	Wait          string `json:"wait"`
 }
 
 // Sort .
@@ -30,6 +34,7 @@ type Inbox struct {
 	Domain   string    `json:"domain"`
 	To       string    `json:"to"`
 	Messages []Message `json:"msgs"`
+	Cursor   string    `json:"cursor"`
 }
 
 // Message .
@@ -72,6 +77,7 @@ type FetchInboxMessageOptions struct {
 type FetchMessageOptions struct {
 	Domain    string `json:"domain"`
 	MessageId string `json:"message_id"`
+	Delete    string `json:"delete"`
 }
 
 // FetchSMSMessageOptions .
@@ -142,6 +148,12 @@ type FetchMessageLinksOptions struct {
 	MessageId string `json:"message_id"`
 }
 
+// FetchMessageLinksFullOptions .
+type FetchMessageLinksFullOptions struct {
+	Domain    string `json:"domain"`
+	MessageId string `json:"message_id"`
+}
+
 // FetchInboxMessageLinksOptions .
 type FetchInboxMessageLinksOptions struct {
 	Domain    string `json:"domain"`
@@ -152,6 +164,17 @@ type FetchInboxMessageLinksOptions struct {
 // MessageLinks .
 type MessageLinks struct {
 	Links []string `json:"links"`
+}
+
+// MessageLinksFull .
+type MessageLinksFull struct {
+	Links []LinkEntity `json:"links"`
+}
+
+// LinkEntity .
+type LinkEntity struct {
+	Link string `json:"link"`
+	Text string `json:"text"`
 }
 
 // DeleteAllDomainMessagesOptions .
@@ -280,7 +303,25 @@ func (c *Client) FetchInbox(options *FetchInboxOptions) (*Inbox, error) {
 
 	var buf bytes.Buffer
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/inboxes/%s?skip=%d&limit=%d&sort=%v&decode_subject=%t", c.baseURL, options.Domain, options.Inbox, skip, limit, sort, decodeSubject), &buf)
+	url := fmt.Sprintf("%s/domains/%s/inboxes/%s?skip=%d&limit=%d&sort=%v&decode_subject=%t", c.baseURL, options.Domain, options.Inbox, skip, limit, sort, decodeSubject)
+
+	if options.Cursor != "" {
+		url = fmt.Sprintf("%s&cursor=%s", url, options.Cursor)
+	}
+
+	if options.Full != false {
+		url = fmt.Sprintf("%s&full=%s", url, "true")
+	}
+
+	if options.Delete != "" {
+		url = fmt.Sprintf("%s&delete=%s", url, options.Delete)
+	}
+
+	if options.Wait != "" {
+		url = fmt.Sprintf("%s&wait=%s", url, options.Wait)
+	}
+
+	req, err := http.NewRequest("GET", url, &buf)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +355,13 @@ func (c *Client) FetchInboxMessage(options *FetchInboxMessageOptions) (*Message,
 func (c *Client) FetchMessage(options *FetchMessageOptions) (*Message, error) {
 	var buf bytes.Buffer
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/messages/%s", c.baseURL, options.Domain, options.MessageId), &buf)
+	url := fmt.Sprintf("%s/domains/%s/messages/%s", c.baseURL, options.Domain, options.MessageId)
+
+	if options.Delete != "" {
+		url = fmt.Sprintf("%s?delete=%s", url, options.Delete)
+	}
+
+	req, err := http.NewRequest("GET", url, &buf)
 	if err != nil {
 		return nil, err
 	}
@@ -422,6 +469,23 @@ func (c *Client) FetchMessageLinks(options *FetchMessageLinksOptions) (*MessageL
 	}
 
 	res := MessageLinks{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// Retrieves all links full found within a given email
+func (c *Client) FetchMessageLinksFull(options *FetchMessageLinksFullOptions) (*MessageLinksFull, error) {
+	var buf bytes.Buffer
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/domains/%s/messages/%s/linksfull", c.baseURL, options.Domain, options.MessageId), &buf)
+	if err != nil {
+		return nil, err
+	}
+
+	res := MessageLinksFull{}
 	if err := c.sendRequest(req, &res); err != nil {
 		return nil, err
 	}

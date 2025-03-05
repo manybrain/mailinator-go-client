@@ -44,6 +44,12 @@ type TeamInfo struct {
 	Status         string          `json:"status"`
 }
 
+// TeamInfoData .
+type TeamInfoData struct {
+	ServerTime string   `json:"server_time"`
+	Domains    []string `json:"private_domains"`
+}
+
 // PrivateDomain .
 type PrivateDomain struct {
 	PD      string `json:"pd"`
@@ -95,6 +101,21 @@ func (c *Client) GetTeam() (*TeamInfo, error) {
 	}
 
 	res := TeamInfo{}
+	if err := c.sendRequest(req, &res); err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+// Retrieves team info
+func (c *Client) GetTeamInfo() (*TeamInfoData, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/teaminfo", c.baseURL), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res := TeamInfoData{}
 	if err := c.sendRequest(req, &res); err != nil {
 		return nil, err
 	}

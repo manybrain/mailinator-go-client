@@ -1,6 +1,6 @@
 # mailinator-go-client
 
-[Mailianator.com](https://www.mailinator.com/) Go client.
+[Mailinator.com](https://www.mailinator.com/) Go client.
 
 ## Install
 

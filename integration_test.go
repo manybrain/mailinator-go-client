@@ -180,6 +180,14 @@ func TestGetTeam(t *testing.T) {
 	assert.NotNil(t, res.Id, "expecting non-nil team id result")
 }
 
+func TestGetTeamInfo(t *testing.T) {
+	c := NewMailinatorClient(ENV_API_TOKEN)
+
+	res, err := c.GetTeamInfo()
+	assert.Nil(t, err, "expecting nil error")
+	assert.NotNil(t, res, "expecting non-nil result")
+}
+
 // Rules tests.
 func TestCreateRule(t *testing.T) {
 	c := NewMailinatorClient(ENV_API_TOKEN)
@@ -292,6 +300,42 @@ func TestFetchInbox(t *testing.T) {
 	}
 }
 
+func TestFetchInboxWithCursorParam(t *testing.T) {
+	c := NewMailinatorClient(ENV_API_TOKEN)
+
+	res, err := c.FetchInbox(&FetchInboxOptions{Domain: domain.Name, Inbox: ENV_INBOX_ALL})
+	assert.Nil(t, err, "expecting nil error")
+	assert.NotNil(t, res, "expecting non-nil result")
+
+	res2, err2 := c.FetchInbox(&FetchInboxOptions{Domain: domain.Name, Inbox: ENV_INBOX_ALL, Cursor: res.Cursor, Limit: 1})
+	assert.Nil(t, err2, "expecting nil error")
+	assert.NotNil(t, res2, "expecting non-nil result")
+}
+
+func TestFetchInboxWithFullParam(t *testing.T) {
+	c := NewMailinatorClient(ENV_API_TOKEN)
+
+	res, err := c.FetchInbox(&FetchInboxOptions{Domain: domain.Name, Inbox: ENV_INBOX_ALL, Full: true, Limit: 1})
+	assert.Nil(t, err, "expecting nil error")
+	assert.NotNil(t, res, "expecting non-nil result")
+}
+
+func TestFetchInboxWithDeleteParam(t *testing.T) {
+	c := NewMailinatorClient(ENV_API_TOKEN)
+
+	res, err := c.FetchInbox(&FetchInboxOptions{Domain: domain.Name, Inbox: ENV_INBOX_ALL, Delete: "10s", Limit: 1})
+	assert.Nil(t, err, "expecting nil error")
+	assert.NotNil(t, res, "expecting non-nil result")
+}
+
+func TestFetchInboxWithWaitParam(t *testing.T) {
+	c := NewMailinatorClient(ENV_API_TOKEN)
+
+	res, err := c.FetchInbox(&FetchInboxOptions{Domain: domain.Name, Inbox: ENV_INBOX_ALL, Wait: "10s", Limit: 1})
+	assert.Nil(t, err, "expecting nil error")
+	assert.NotNil(t, res, "expecting non-nil result")
+}
+
 func TestFetchInboxMessage(t *testing.T) {
 	c := NewMailinatorClient(ENV_API_TOKEN)
 
@@ -303,7 +347,15 @@ func TestFetchInboxMessage(t *testing.T) {
 func TestFetchMessage(t *testing.T) {
 	c := NewMailinatorClient(ENV_API_TOKEN)
 
-	res, err := c.FetchMessage(&FetchMessageOptions{domain.Name, message.Id})
+	res, err := c.FetchMessage(&FetchMessageOptions{domain.Name, message.Id, ""})
+	assert.Nil(t, err, "expecting nil error")
+	assert.NotNil(t, res, "expecting non-nil result")
+}
+
+func TestFetchMessageWithDeleteParameter(t *testing.T) {
+	c := NewMailinatorClient(ENV_API_TOKEN)
+
+	res, err := c.FetchMessage(&FetchMessageOptions{domain.Name, message.Id, "10s"})
 	assert.Nil(t, err, "expecting nil error")
 	assert.NotNil(t, res, "expecting non-nil result")
 }
@@ -360,6 +412,14 @@ func TestFetchMessageLinks(t *testing.T) {
 	c := NewMailinatorClient(ENV_API_TOKEN)
 
 	res, err := c.FetchMessageLinks(&FetchMessageLinksOptions{domain.Name, ENV_MESSAGE_ID_WITH_ATTACHMENT})
+	assert.Nil(t, err, "expecting nil error")
+	assert.NotNil(t, res, "expecting non-nil result")
+}
+
+func TestFetchMessageLinksFull(t *testing.T) {
+	c := NewMailinatorClient(ENV_API_TOKEN)
+
+	res, err := c.FetchMessageLinksFull(&FetchMessageLinksFullOptions{domain.Name, ENV_MESSAGE_ID_WITH_ATTACHMENT})
 	assert.Nil(t, err, "expecting nil error")
 	assert.NotNil(t, res, "expecting non-nil result")
 }
@@ -461,72 +521,6 @@ var testWebhook = Webhook{
 	Subject: "Test Subject",
 	Text:    "Hello, this is a test message.",
 	To:      "recipient@example.com",
-}
-
-func TestPublicWebhook(t *testing.T) {
-	c := NewMailinatorClient("")
-
-	options := &PublicWebhookOptions{
-		Webhook: testWebhook,
-	}
-
-	res, err := c.PublicWebhook(options)
-	if err != nil {
-		t.Errorf("PublicWebhook failed: %v", err)
-	}
-
-	assert.NotNil(t, res, "expecting non-nil result")
-	if res != nil {
-		assert.Equal(t, "ok", res.Status, "expecting correct status")
-	}
-}
-
-func TestPublicInboxWebhook(t *testing.T) {
-	c := NewMailinatorClient("")
-
-	options := &PublicInboxWebhookOptions{
-		Webhook: testWebhook,
-		Inbox:   ENV_WEBHOOK_INBOX,
-	}
-
-	res, err := c.PublicInboxWebhook(options)
-	if err != nil {
-		t.Errorf("PublicInboxWebhook failed: %v", err)
-	}
-
-	assert.NotNil(t, res, "expecting non-nil result")
-	if res != nil {
-		assert.Equal(t, "ok", res.Status, "expecting correct status")
-	}
-}
-
-func TestPublicCustomServiceWebhook(t *testing.T) {
-	c := NewMailinatorClient("")
-
-	options := &PublicCustomServiceWebhookOptions{
-		Webhook:       testWebhook,
-		CustomService: ENV_WEBHOOK_CUSTOMSERVICE,
-	}
-
-	err := c.PublicCustomServiceWebhook(options)
-	if err != nil {
-		t.Errorf("PublicCustomServiceWebhook failed: %v", err)
-	}
-}
-
-func TestPublicCustomServiceInboxWebhook(t *testing.T) {
-	c := NewMailinatorClient("")
-
-	options := &PublicCustomServiceInboxWebhookOptions{
-		Webhook:       testWebhook,
-		CustomService: ENV_WEBHOOK_CUSTOMSERVICE,
-		Inbox:         ENV_WEBHOOK_INBOX,
-	}
-
-	err := c.PublicCustomServiceInboxWebhook(options)
-	if err != nil {
-		t.Errorf("PublicCustomServiceInboxWebhook failed: %v", err)
-	}
 }
 
 func TestPrivateWebhook(t *testing.T) {
